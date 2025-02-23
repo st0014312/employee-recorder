@@ -1,0 +1,17 @@
+{
+  "name": "card-manager",
+  "version": "1.0.0",
+  "description": "AWS Lambda membership card service",
+  "main": "membershipApi.js",
+  "scripts": {
+    "start": "serverless offline"
+  },
+  "devDependencies": {
+    "serverless": "^4.4.16",
+    "serverless-offline": "^14.3.4"
+  },
+  "dependencies": {
+    "serverless-dynamodb": "^0.2.56",
+    "serverless-dynamodb-local": "^0.2.10"
+  }
+}

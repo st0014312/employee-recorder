@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        margin: 20px;
+        padding: 20px;
+        background-color: #e5e5ea;
+      }
+      nav a {
+        margin-right: 10px;
+      }
+      #cardView,
+      #captureView {
+        display: none;
+      }
+      /* Updated styling for membershipCard and virtualCard to make the virtual card larger and auto scale */
+      #membershipCard {
+        margin: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      #virtualCard {
+        width: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin-bottom: 10px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      /* Ensure barcode remains centered and responsive */
+      #barcode {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+      }
+      button {
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .card-header {
+        width: 100%;
+        text-align: center;
+      }
+      .card-body {
+        flex: 1;
+        width: 100%;
+        text-align: center;
+      }
+      .card-footer {
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+      }
+      /* Updated mobile styles for membershipCard and virtualCard to use full width and auto scale height maintaining aspect ratio */
+      @media (max-width: 600px) {
+        body {
+          padding: 15px;
+          font-size: 18px;
+        }
+        button {
+          padding: 15px 25px;
+          font-size: 20px;
+        }
+        #membershipCard {
+          width: 100%;
+          max-width: none;
+          margin: 0 auto;
+          font-size: 18px;
+        }
+        #virtualCard {
+          /* width: 100%; */
+          /* Removed fixed aspect-ratio to allow flexible scaling */
+          height: auto;
+          font-size: 18px;
+        }
+      }
+      #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      #snackbar.show {
+        visibility: visible;
+        -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+      }
+      @-webkit-keyframes fadein { from { top: 0; opacity: 0; } to { top: 20px; opacity: 1; } }
+      @keyframes fadein { from { top: 0; opacity: 0; } to { top: 20px; opacity: 1; } }
+      @-webkit-keyframes fadeout { from { top: 20px; opacity: 1; } to { top: 0; opacity: 0; } }
+      @keyframes fadeout { from { top: 20px; opacity: 1; } to { top: 0; opacity: 0; } }
+
+      /* Added styling for in/out button to center it and make it bigger */
+      #recordBtn {
+        display: block;
+        margin: 20px auto 0 auto;
+        padding: 15px 25px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Card</h1>
+    <div id="snackbar"></div>
+    <nav>
+      <a href="working.html">View Working Hours</a>
+    </nav>
+
+    <!-- Added uploadView section for membership card upload -->
+    <div id="uploadView" style="text-align: center; margin-top: 50px;">
+      <h2>Upload your Membership Card</h2>
+      <input type="file" id="cardUpload" accept="image/*" />
+    </div>
+
+    <!-- Main view which shows the virtual membership card and in/out button -->
+    <div id="cardView">
+      <div id="membershipCard">
+        <div id="virtualCard">
+          <div class="card-header">
+            <h2>Card</h2>
+          </div>
+          <div class="card-body">
+            <!-- Virtual card details can go here, original image removed -->
+          </div>
+          <div class="card-footer">
+            <svg id="barcode"></svg>
+          </div>
+        </div>
+      </div>
+      <button id="recordBtn"></button>
+    </div>
+
+    <script>
+      // Utility to get/set localStorage items
+      function getLocalItem(key) {
+        try {
+          return JSON.parse(localStorage.getItem(key));
+        } catch (e) {
+          return null;
+        }
+      }
+      function setLocalItem(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      // Added function to show snackbar notification
+      function showSnackbar(message) {
+        const snackbar = document.getElementById('snackbar');
+        snackbar.textContent = message;
+        snackbar.className = 'show';
+        setTimeout(() => {
+          snackbar.className = snackbar.className.replace('show', '');
+        }, 3000);
+      }
+
+      // Generate a device id if not exists
+      function ensureDeviceId() {
+        let deviceId = localStorage.getItem('deviceId');
+        if (!deviceId) {
+          deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('deviceId', deviceId);
+        }
+        return deviceId;
+      }
+      const deviceId = ensureDeviceId();
+
+      // Define API base URL
+      const apiBaseUrl = 'https://2iilx55qyl.execute-api.us-east-1.amazonaws.com/dev';
+
+      // Initialize membership by calling API if not already stored locally
+      async function initMembership() {
+        let membership = localStorage.getItem('membership');
+        if (membership) {
+          return JSON.parse(membership);
+        } else {
+          try {
+            const response = await fetch(apiBaseUrl + '/membership', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              // Changed payload: name becomes deviceId and cardNumber becomes barcode
+              body: JSON.stringify({ name: deviceId, cardNumber: localStorage.getItem('barcode') })
+            });
+            const data = await response.json();
+            if (response.ok) {
+              localStorage.setItem('membership', JSON.stringify(data.membership));
+              // Set initial status to 'in' if not already set
+              if (!localStorage.getItem('currentStatus')) {
+                localStorage.setItem('currentStatus', 'in');
+              }
+              return data.membership;
+            } else {
+              showSnackbar('Error creating membership: ' + data.error);
+            }
+          } catch (err) {
+            showSnackbar('Error: ' + err.message);
+          }
+        }
+      }
+
+      // Remove fetchRecords function since status is now stored locally
+      // Instead, use localStorage to maintain current status
+
+      // Update the record button based on current status stored in localStorage
+      function updateStatusButton() {
+        let currentStatus = localStorage.getItem('currentStatus');
+        if (!currentStatus) {
+          currentStatus = 'in';
+          localStorage.setItem('currentStatus', 'in');
+        }
+        document.getElementById('recordBtn').textContent = currentStatus.toUpperCase();
+      }
+
+      // Record an entry by calling API and update status locally
+      async function recordEntry() {
+        const recordBtn = document.getElementById('recordBtn');
+        if (recordBtn.disabled) return;
+        recordBtn.disabled = true;
+
+        const membership = JSON.parse(localStorage.getItem('membership'));
+        if (!membership) {
+          showSnackbar('Membership not found');
+          recordBtn.disabled = false;
+          return;
+        }
+
+        // Get current status from local storage (default to 'in')
+        let currentStatus = localStorage.getItem('currentStatus') || 'in';
+
+        try {
+          const response = await fetch(apiBaseUrl + '/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cardId: membership.id, type: currentStatus })
+          });
+          const data = await response.json();
+          if (response.ok) {
+            showSnackbar('Recorded ' + currentStatus + ' at ' + new Date(data.record.timestamp).toLocaleTimeString());
+            // Toggle the status and save it
+            let newStatus = currentStatus === 'in' ? 'out' : 'in';
+            localStorage.setItem('currentStatus', newStatus);
+          } else {
+            showSnackbar('Error recording: ' + data.error);
+          }
+        } catch (err) {
+          showSnackbar('Error: ' + err.message);
+        }
+
+        updateStatusButton();
+        recordBtn.disabled = false;
+      }
+
+      // Function to generate barcode from membership photo using QuaggaJS
+      function generateBarcodeFromImage() {
+        const storedBarcode = localStorage.getItem('barcode');
+        if (storedBarcode) {
+          JsBarcode('#barcode', storedBarcode, {
+            format: 'CODE39',
+            width: 4,
+            height: 150,
+            displayValue: false
+          });
+        } else {
+          showSnackbar('Barcode not found. Please upload your card again.');
+        }
+      }
+
+      // Update the virtual card view by initializing membership and updating record button
+      function showCardView() {
+        document.getElementById('cardView').style.display = 'block';
+        generateBarcodeFromImage();
+        updateStatusButton();
+      }
+
+      // Initialize the app
+      window.onload = function () {
+        // Check if barcode exists instead of membershipPhoto
+        if (localStorage.getItem('barcode')) {
+          document.getElementById('uploadView').style.display = 'none';
+          document.getElementById('cardView').style.display = 'block';
+          generateBarcodeFromImage();
+          if (localStorage.getItem('membership')) {
+            updateStatusButton();
+          }
+        } else {
+          document.getElementById('uploadView').style.display = 'block';
+          document.getElementById('cardView').style.display = 'none';
+        }
+
+        document.getElementById('cardUpload').addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              // Instead of storing the image, we process it and extract the barcode
+              Quagga.decodeSingle({
+                src: ev.target.result,
+                numOfWorkers: 0,
+                inputStream: { size: 800 },
+                decoder: { readers: ['code_39_reader'] }
+              }, function(result) {
+                if(result && result.codeResult) {
+                  const code = result.codeResult.code;
+                  localStorage.setItem('barcode', code);
+                  document.getElementById('uploadView').style.display = 'none';
+                  document.getElementById('cardView').style.display = 'block';
+                  generateBarcodeFromImage();
+                  // Initialize membership only if not already done
+                  if (!localStorage.getItem('membership')) {
+                    initMembership().then(() => {
+                      updateStatusButton();
+                    });
+                  } else {
+                    updateStatusButton();
+                  }
+                } else {
+                  showSnackbar('Barcode not detected in the uploaded image.');
+                }
+              });
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        document.getElementById('recordBtn').addEventListener('click', function () {
+          recordEntry();
+        });
+      };
+    </script>
+  </body>
+</html>

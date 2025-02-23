@@ -1,0 +1,74 @@
+frameworkVersion: ~4.4.0
+service: card-manager
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: dev
+  profile: linkupadmin
+  httpApi:
+    cors: true
+  environment:
+    MEMBERSHIP_TABLE: Memberships
+    RECORDS_TABLE: Records
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: 
+          - "Fn::GetAtt": [MembershipsTable, Arn]
+          - "Fn::GetAtt": [RecordsTable, Arn]
+
+functions:
+  membershipApi:
+    handler: membershipApi.handler
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}
+
+custom:
+  serverless-dynamodb:
+    start:
+      port: 8000
+      docker: false
+
+resources:
+  Resources:
+    MembershipsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Memberships
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    RecordsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Records
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: cardId
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - AttributeName: cardId
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+
+plugins:
+  - serverless-dynamodb
+  - serverless-offline # for local development
