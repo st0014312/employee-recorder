@@ -1,0 +1,31 @@
+name: Deploy HTML Files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - index.html
+      - working.html
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+          role-session-name: GitHubActionsSession
+
+      - name: Upload files to S3
+        run: |
+          aws s3 cp index.html s3://employee-card-management-web/index.html
+          aws s3 cp working.html s3://employee-card-management-web/working.html
