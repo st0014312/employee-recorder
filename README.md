@@ -1,39 +1,40 @@
-# Employee Card Management
+# Employee Card Manager
 
-This project is a web application that allows employees to manage their own employee cards, record their check-in and check-out times, and view their attendance records.
+This project is a web application that allows employees to manage their employee card, record their check-in (in) and check-out (out) times, and view their attendance records.
 
 ## Features
 
-- **Employee Card Creation:** Employees can create and update their own employee cards.
-- **Attendance Management:** Record and view clock in and clock out times.
-- **Web Interface:** Accessible through a user-friendly web interface.
+- **Employee Card Registration:** Employees can create and update their own employee card information.
+- **Time Record Logging:** Users can record their in and out times throughout the day, ensuring accurate tracking of working hours.
+- **Attendance Overview:** A dynamic calendar view displays daily and monthly attendance summaries with total working hours for each day.
+- **Backend Integration:** The application interacts with an API to fetch attendance records.
 
-## Current Deployment
+## Hosted on AWS S3
 
-The web application is hosted on AWS S3 and can be accessed at:
+The web application is hosted as a static site on AWS S3. You can access it here:
 
-[Employee Card Management Web](https://employee-card-management-web.s3.us-east-1.amazonaws.com/index.html)
-
-## Project Structure
-
-- `index.html`: Main webpage for the application.
-- `membershipApi.js`: JavaScript logic for handling employee cards and attendance records.
-- `package.json`: Node.js project configuration and dependencies.
-- `serverless.yml`: Configuration file for deploying the project using Serverless framework.
-- `working.html`: Additional HTML page under development/test.
+https://employee-card-management-web.s3.us-east-1.amazonaws.com/index.html
 
 ## Getting Started
 
-To run the project locally:
-
 1. Clone the repository.
-2. Install dependencies using `npm install`.
-3. Run the application locally (if applicable). For deployment specifics, refer to the `serverless.yml` file.
+2. Install the required dependencies (if applicable).
+3. Configure any necessary API endpoints or local settings.
+4. Open `index.html` or `working.html` in your browser to start using the application.
+
+## Project Structure
+
+- `index.html`: Main landing page for the Card Manager.
+- `working.html`: Page for recording and viewing working hours.
+- `membershipApi.js`: Handles API calls for employee membership and records.
+- `README.md`: This documentation file.
+- `package.json`: Contains project metadata and dependency definitions.
+- `serverless.yml`: Configuration for deploying serverless functions or infrastructure.
 
 ## Contributing
 
-Contributions and suggestions are welcome. Please fork the repository and create pull requests for any improvements.
+Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
 
 ## License
 
-[MIT](LICENSE)
+[Specify your license here]

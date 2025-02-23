@@ -162,12 +162,21 @@
       return date.toLocaleString();
     }
 
-    // Group records by date (YYYY-MM-DD)
+    // Added helper function to compute local date key
+    function getLocalDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Updated existing function to use local date key
     function groupRecordsByDate(records) {
       const groups = {};
       records.forEach(record => {
         const date = new Date(record.timestamp);
-        const key = date.toISOString().slice(0,10);
+        // Use local date instead of ISO string
+        const key = getLocalDateKey(date);
         if (!groups[key]) { groups[key] = []; }
         groups[key].push(record);
       });
@@ -263,7 +272,7 @@
         const cell = document.createElement('div');
         cell.className = 'day';
         const cellDate = new Date(year, month, d);
-        const dateKey = cellDate.toISOString().slice(0,10);
+        const dateKey = getLocalDateKey(cellDate);
         cell.textContent = d;
 
         let dayRecords = groups[dateKey] || [];
@@ -320,7 +329,7 @@
       const today = new Date();
       let selectedDate = `${year}-${String(month+1).padStart(2, '0')}-01`;
       if (today.getFullYear() === year && today.getMonth() === month) {
-        selectedDate = today.toISOString().slice(0,10);
+        selectedDate = getLocalDateKey(today);
       }
       renderCalendar(groups, selectedDate);
       renderRecordsForDay(selectedDate, groups);
