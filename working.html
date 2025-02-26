@@ -207,6 +207,25 @@
       }
     }
 
+    function calTotalHours(dayRecords) {
+      let total = 0;
+      let firstIn = null;
+      let lastOut = null;
+      dayRecords.forEach(record => {
+        if (record.type === 'in') {
+          if (!firstIn) {
+            firstIn = record;
+          }
+        } else if (record.type === 'out') {
+          lastOut = record;
+        }
+      });
+      if(firstIn && lastOut) {
+        total = lastOut.timestamp - firstIn.timestamp;
+      }
+      return total / (1000 * 60 * 60);
+    }
+
     // Render records for a specific day using provided groups
     function renderRecordsForDay(dateKey, groups) {
       const detailsDiv = document.getElementById('recordDetails');
@@ -225,32 +244,7 @@
       });
       tableHTML += '</tbody></table>';
 
-      // Compute total working hours
-      let total = 0;
-      // let lastIn = null;
-      let firstIn = null;
-      let lastOut = null;
-      dayRecords.forEach(record => {
-        if (record.type === 'in') {
-          if (!firstIn) {
-            firstIn = record;
-          }
-        } else if (record.type === 'out') {
-          lastOut = record;
-        }
-      });
-      // dayRecords.forEach(record => {
-      //   if (record.type === 'in') {
-      //     lastIn = record;
-      //   } else if (record.type === 'out' && lastIn) {
-      //     total += (record.timestamp - lastIn.timestamp);
-      //     lastIn = null;
-      //   }
-      // });
-      if(firstIn && lastOut) {
-        total = lastOut.timestamp - firstIn.timestamp;
-      }
-      const totalHours = total / (1000 * 60 * 60);
+      const totalHours = calTotalHours(dayRecords) / (1000 * 60 * 60);
       const totalHTML = `<p><strong>Total Working Hours:</strong> ${totalHours.toFixed(1)}h</p>`;
       detailsDiv.innerHTML = tableHTML + totalHTML;
     }
@@ -294,18 +288,8 @@
           const dot = document.createElement('div');
           dot.className = 'dot';
           cell.appendChild(dot);
-          // Compute total working hours for the day
-          let total = 0;
-          let lastIn = null;
-          dayRecords.forEach(record => {
-            if (record.type === 'in') {
-              lastIn = record;
-            } else if (record.type === 'out' && lastIn) {
-              total += (record.timestamp - lastIn.timestamp);
-              lastIn = null;
-            }
-          });
-          const totalHours = total / (1000 * 60 * 60);
+          
+          const totalHours = calTotalHours(dayRecords) / (1000 * 60 * 60);
           if(totalHours > 0) {
             const hoursLabel = document.createElement('div');
             hoursLabel.style.position = 'absolute';
