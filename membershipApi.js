@@ -8,6 +8,7 @@ const {
   PutCommand,
   GetCommand,
   QueryCommand,
+  ScanCommand // Added ScanCommand for membership lookup
 } = require("@aws-sdk/lib-dynamodb");
 
 const client = new DynamoDBClient({});
@@ -57,25 +58,54 @@ exports.handler = async (event, context) => {
     console.log("Received event:", JSON.stringify(event));
 
     if (method === "POST" && path === "/membership") {
-      // Add a new membership card
+      // Updated membership initialization logic
       // Expected body: { name: string, cardNumber: string, otherDetails: {} }
       const body = JSON.parse(event.body);
-      const id = generateId();
-      const membership = { id, ...body, createdAt: Date.now() };
-      // Save membership to DynamoDB
-      await docClient.send(
-        new PutCommand({
-          TableName: process.env.MEMBERSHIP_TABLE,
-          Item: membership,
-        })
-      );
-      response = {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: "Membership added successfully",
-          membership,
-        }),
-      };
+      const { name, cardNumber, ...otherDetails } = body;
+
+      if (!cardNumber) {
+        response = {
+          statusCode: 400,
+          body: JSON.stringify({ error: "cardNumber is required" })
+        };
+      } else {
+        // Check if a membership with the same cardNumber already exists
+        const scanResult = await docClient.send(
+          new ScanCommand({
+            TableName: process.env.MEMBERSHIP_TABLE,
+            FilterExpression: "cardNumber = :cardNum",
+            ExpressionAttributeValues: { ":cardNum": cardNumber }
+          })
+        );
+
+        if (scanResult.Items && scanResult.Items.length > 0) {
+          // Membership exists, return the existing record
+          response = {
+            statusCode: 200,
+            body: JSON.stringify({
+              message: "Membership exists",
+              membership: scanResult.Items[0]
+            })
+          };
+        } else {
+          // Create new membership record
+          const id = generateId();
+          const membership = { id, name, cardNumber, ...otherDetails, createdAt: Date.now() };
+          await docClient.send(
+            new PutCommand({
+              TableName: process.env.MEMBERSHIP_TABLE,
+              Item: membership
+            })
+          );
+          response = {
+            statusCode: 200,
+            body: JSON.stringify({
+              message: "Membership added successfully",
+              membership
+            })
+          };
+        }
+      }
     } else if (method === "POST" && path === "/record") {
       // Record an in/out action
       // Expected body: { cardId: string, type: "in" | "out" }

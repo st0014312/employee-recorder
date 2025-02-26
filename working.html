@@ -244,7 +244,7 @@
       });
       tableHTML += '</tbody></table>';
 
-      const totalHours = calTotalHours(dayRecords) / (1000 * 60 * 60);
+      const totalHours = calTotalHours(dayRecords);
       const totalHTML = `<p><strong>Total Working Hours:</strong> ${totalHours.toFixed(1)}h</p>`;
       detailsDiv.innerHTML = tableHTML + totalHTML;
     }
@@ -288,8 +288,8 @@
           const dot = document.createElement('div');
           dot.className = 'dot';
           cell.appendChild(dot);
-          
-          const totalHours = calTotalHours(dayRecords) / (1000 * 60 * 60);
+
+          const totalHours = calTotalHours(dayRecords);
           if(totalHours > 0) {
             const hoursLabel = document.createElement('div');
             hoursLabel.style.position = 'absolute';

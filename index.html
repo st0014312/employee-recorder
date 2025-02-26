@@ -215,20 +215,9 @@
         }, 3000);
       }
 
-      // Generate a device id if not exists
-      function ensureDeviceId() {
-        let deviceId = localStorage.getItem("deviceId");
-        if (!deviceId) {
-          deviceId =
-            "device_" +
-            Date.now() +
-            "_" +
-            Math.random().toString(36).substr(2, 9);
-          localStorage.setItem("deviceId", deviceId);
-        }
-        return deviceId;
-      }
-      const deviceId = ensureDeviceId();
+      // Remove device id generation as it's no longer needed
+      // function ensureDeviceId() { ... }
+      // const deviceId = ensureDeviceId();
 
       // Define API base URL
       const apiBaseUrl =
@@ -241,22 +230,23 @@
           return JSON.parse(membership);
         } else {
           try {
+            const barcode = localStorage.getItem("barcode");
+            if (!barcode) {
+              showSnackbar("Barcode is missing. Please upload your membership card.");
+              return;
+            }
             const response = await fetch(apiBaseUrl + "/membership", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              // Changed payload: name becomes deviceId and cardNumber becomes barcode
+              // Using barcode for both name and cardNumber
               body: JSON.stringify({
-                name: deviceId,
-                cardNumber: localStorage.getItem("barcode"),
+                name: barcode,
+                cardNumber: barcode
               }),
             });
             const data = await response.json();
             if (response.ok) {
-              localStorage.setItem(
-                "membership",
-                JSON.stringify(data.membership)
-              );
-              // Set initial status to 'in' if not already set
+              localStorage.setItem("membership", JSON.stringify(data.membership));
               if (!localStorage.getItem("currentStatus")) {
                 localStorage.setItem("currentStatus", "in");
               }
