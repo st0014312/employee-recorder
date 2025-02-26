@@ -227,15 +227,29 @@
 
       // Compute total working hours
       let total = 0;
-      let lastIn = null;
+      // let lastIn = null;
+      let firstIn = null;
+      let lastOut = null;
       dayRecords.forEach(record => {
         if (record.type === 'in') {
-          lastIn = record;
-        } else if (record.type === 'out' && lastIn) {
-          total += (record.timestamp - lastIn.timestamp);
-          lastIn = null;
+          if (!firstIn) {
+            firstIn = record;
+          }
+        } else if (record.type === 'out') {
+          lastOut = record;
         }
       });
+      // dayRecords.forEach(record => {
+      //   if (record.type === 'in') {
+      //     lastIn = record;
+      //   } else if (record.type === 'out' && lastIn) {
+      //     total += (record.timestamp - lastIn.timestamp);
+      //     lastIn = null;
+      //   }
+      // });
+      if(firstIn && lastOut) {
+        total = lastOut.timestamp - firstIn.timestamp;
+      }
       const totalHours = total / (1000 * 60 * 60);
       const totalHTML = `<p><strong>Total Working Hours:</strong> ${totalHours.toFixed(1)}h</p>`;
       detailsDiv.innerHTML = tableHTML + totalHTML;

@@ -112,10 +112,46 @@
         -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
         animation: fadein 0.5s, fadeout 0.5s 2.5s;
       }
-      @-webkit-keyframes fadein { from { top: 0; opacity: 0; } to { top: 20px; opacity: 1; } }
-      @keyframes fadein { from { top: 0; opacity: 0; } to { top: 20px; opacity: 1; } }
-      @-webkit-keyframes fadeout { from { top: 20px; opacity: 1; } to { top: 0; opacity: 0; } }
-      @keyframes fadeout { from { top: 20px; opacity: 1; } to { top: 0; opacity: 0; } }
+      @-webkit-keyframes fadein {
+        from {
+          top: 0;
+          opacity: 0;
+        }
+        to {
+          top: 20px;
+          opacity: 1;
+        }
+      }
+      @keyframes fadein {
+        from {
+          top: 0;
+          opacity: 0;
+        }
+        to {
+          top: 20px;
+          opacity: 1;
+        }
+      }
+      @-webkit-keyframes fadeout {
+        from {
+          top: 20px;
+          opacity: 1;
+        }
+        to {
+          top: 0;
+          opacity: 0;
+        }
+      }
+      @keyframes fadeout {
+        from {
+          top: 20px;
+          opacity: 1;
+        }
+        to {
+          top: 0;
+          opacity: 0;
+        }
+      }
 
       /* Added styling for in/out button to center it and make it bigger */
       #recordBtn {
@@ -127,14 +163,13 @@
     </style>
   </head>
   <body>
-    <h1>Card</h1>
     <div id="snackbar"></div>
     <nav>
       <a href="working.html">View Working Hours</a>
     </nav>
 
     <!-- Added uploadView section for membership card upload -->
-    <div id="uploadView" style="text-align: center; margin-top: 50px;">
+    <div id="uploadView" style="text-align: center; margin-top: 50px">
       <h2>Upload your Membership Card</h2>
       <input type="file" id="cardUpload" accept="image/*" />
     </div>
@@ -172,54 +207,65 @@
 
       // Added function to show snackbar notification
       function showSnackbar(message) {
-        const snackbar = document.getElementById('snackbar');
+        const snackbar = document.getElementById("snackbar");
         snackbar.textContent = message;
-        snackbar.className = 'show';
+        snackbar.className = "show";
         setTimeout(() => {
-          snackbar.className = snackbar.className.replace('show', '');
+          snackbar.className = snackbar.className.replace("show", "");
         }, 3000);
       }
 
       // Generate a device id if not exists
       function ensureDeviceId() {
-        let deviceId = localStorage.getItem('deviceId');
+        let deviceId = localStorage.getItem("deviceId");
         if (!deviceId) {
-          deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          localStorage.setItem('deviceId', deviceId);
+          deviceId =
+            "device_" +
+            Date.now() +
+            "_" +
+            Math.random().toString(36).substr(2, 9);
+          localStorage.setItem("deviceId", deviceId);
         }
         return deviceId;
       }
       const deviceId = ensureDeviceId();
 
       // Define API base URL
-      const apiBaseUrl = 'https://2iilx55qyl.execute-api.us-east-1.amazonaws.com/dev';
+      const apiBaseUrl =
+        "https://2iilx55qyl.execute-api.us-east-1.amazonaws.com/dev";
 
       // Initialize membership by calling API if not already stored locally
       async function initMembership() {
-        let membership = localStorage.getItem('membership');
+        let membership = localStorage.getItem("membership");
         if (membership) {
           return JSON.parse(membership);
         } else {
           try {
-            const response = await fetch(apiBaseUrl + '/membership', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const response = await fetch(apiBaseUrl + "/membership", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               // Changed payload: name becomes deviceId and cardNumber becomes barcode
-              body: JSON.stringify({ name: deviceId, cardNumber: localStorage.getItem('barcode') })
+              body: JSON.stringify({
+                name: deviceId,
+                cardNumber: localStorage.getItem("barcode"),
+              }),
             });
             const data = await response.json();
             if (response.ok) {
-              localStorage.setItem('membership', JSON.stringify(data.membership));
+              localStorage.setItem(
+                "membership",
+                JSON.stringify(data.membership)
+              );
               // Set initial status to 'in' if not already set
-              if (!localStorage.getItem('currentStatus')) {
-                localStorage.setItem('currentStatus', 'in');
+              if (!localStorage.getItem("currentStatus")) {
+                localStorage.setItem("currentStatus", "in");
               }
               return data.membership;
             } else {
-              showSnackbar('Error creating membership: ' + data.error);
+              showSnackbar("Error creating membership: " + data.error);
             }
           } catch (err) {
-            showSnackbar('Error: ' + err.message);
+            showSnackbar("Error: " + err.message);
           }
         }
       }
@@ -229,47 +275,56 @@
 
       // Update the record button based on current status stored in localStorage
       function updateStatusButton() {
-        let currentStatus = localStorage.getItem('currentStatus');
+        let currentStatus = localStorage.getItem("currentStatus");
         if (!currentStatus) {
-          currentStatus = 'in';
-          localStorage.setItem('currentStatus', 'in');
+          currentStatus = "in";
+          localStorage.setItem("currentStatus", "in");
         }
-        document.getElementById('recordBtn').textContent = currentStatus.toUpperCase();
+        document.getElementById("recordBtn").textContent =
+          currentStatus.toUpperCase();
       }
 
       // Record an entry by calling API and update status locally
       async function recordEntry() {
-        const recordBtn = document.getElementById('recordBtn');
+        const recordBtn = document.getElementById("recordBtn");
         if (recordBtn.disabled) return;
         recordBtn.disabled = true;
 
-        const membership = JSON.parse(localStorage.getItem('membership'));
+        const membership = JSON.parse(localStorage.getItem("membership"));
         if (!membership) {
-          showSnackbar('Membership not found');
+          showSnackbar("Membership not found");
           recordBtn.disabled = false;
           return;
         }
 
         // Get current status from local storage (default to 'in')
-        let currentStatus = localStorage.getItem('currentStatus') || 'in';
+        let currentStatus = localStorage.getItem("currentStatus") || "in";
 
         try {
-          const response = await fetch(apiBaseUrl + '/record', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cardId: membership.id, type: currentStatus })
+          const response = await fetch(apiBaseUrl + "/record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cardId: membership.id,
+              type: currentStatus,
+            }),
           });
           const data = await response.json();
           if (response.ok) {
-            showSnackbar('Recorded ' + currentStatus + ' at ' + new Date(data.record.timestamp).toLocaleTimeString());
+            showSnackbar(
+              "Recorded " +
+                currentStatus +
+                " at " +
+                new Date(data.record.timestamp).toLocaleTimeString()
+            );
             // Toggle the status and save it
-            let newStatus = currentStatus === 'in' ? 'out' : 'in';
-            localStorage.setItem('currentStatus', newStatus);
+            let newStatus = currentStatus === "in" ? "out" : "in";
+            localStorage.setItem("currentStatus", newStatus);
           } else {
-            showSnackbar('Error recording: ' + data.error);
+            showSnackbar("Error recording: " + data.error);
           }
         } catch (err) {
-          showSnackbar('Error: ' + err.message);
+          showSnackbar("Error: " + err.message);
         }
 
         updateStatusButton();
@@ -278,22 +333,22 @@
 
       // Function to generate barcode from membership photo using QuaggaJS
       function generateBarcodeFromImage() {
-        const storedBarcode = localStorage.getItem('barcode');
+        const storedBarcode = localStorage.getItem("barcode");
         if (storedBarcode) {
-          JsBarcode('#barcode', storedBarcode, {
-            format: 'CODE39',
+          JsBarcode("#barcode", storedBarcode, {
+            format: "CODE39",
             width: 4,
             height: 150,
-            displayValue: false
+            displayValue: false,
           });
         } else {
-          showSnackbar('Barcode not found. Please upload your card again.');
+          showSnackbar("Barcode not found. Please upload your card again.");
         }
       }
 
       // Update the virtual card view by initializing membership and updating record button
       function showCardView() {
-        document.getElementById('cardView').style.display = 'block';
+        document.getElementById("cardView").style.display = "block";
         generateBarcodeFromImage();
         updateStatusButton();
       }
@@ -301,56 +356,67 @@
       // Initialize the app
       window.onload = function () {
         // Check if barcode exists instead of membershipPhoto
-        if (localStorage.getItem('barcode')) {
-          document.getElementById('uploadView').style.display = 'none';
-          document.getElementById('cardView').style.display = 'block';
+        if (localStorage.getItem("barcode")) {
+          document.getElementById("uploadView").style.display = "none";
+          document.getElementById("cardView").style.display = "block";
           generateBarcodeFromImage();
-          if (localStorage.getItem('membership')) {
+          if (localStorage.getItem("membership")) {
             updateStatusButton();
           }
         } else {
-          document.getElementById('uploadView').style.display = 'block';
-          document.getElementById('cardView').style.display = 'none';
+          document.getElementById("uploadView").style.display = "block";
+          document.getElementById("cardView").style.display = "none";
         }
 
-        document.getElementById('cardUpload').addEventListener('change', function (e) {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (ev) {
-              // Instead of storing the image, we process it and extract the barcode
-              Quagga.decodeSingle({
-                src: ev.target.result,
-                numOfWorkers: 0,
-                inputStream: { size: 800 },
-                decoder: { readers: ['code_39_reader'] }
-              }, function(result) {
-                if(result && result.codeResult) {
-                  const code = result.codeResult.code;
-                  localStorage.setItem('barcode', code);
-                  document.getElementById('uploadView').style.display = 'none';
-                  document.getElementById('cardView').style.display = 'block';
-                  generateBarcodeFromImage();
-                  // Initialize membership only if not already done
-                  if (!localStorage.getItem('membership')) {
-                    initMembership().then(() => {
-                      updateStatusButton();
-                    });
-                  } else {
-                    updateStatusButton();
+        document
+          .getElementById("cardUpload")
+          .addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = function (ev) {
+                // Instead of storing the image, we process it and extract the barcode
+                Quagga.decodeSingle(
+                  {
+                    src: ev.target.result,
+                    numOfWorkers: 0,
+                    inputStream: { size: 800 },
+                    decoder: { readers: ["code_39_reader"] },
+                  },
+                  function (result) {
+                    if (result && result.codeResult) {
+                      const code = result.codeResult.code;
+                      localStorage.setItem("barcode", code);
+                      document.getElementById("uploadView").style.display =
+                        "none";
+                      document.getElementById("cardView").style.display =
+                        "block";
+                      generateBarcodeFromImage();
+                      // Initialize membership only if not already done
+                      if (!localStorage.getItem("membership")) {
+                        initMembership().then(() => {
+                          updateStatusButton();
+                        });
+                      } else {
+                        updateStatusButton();
+                      }
+                    } else {
+                      showSnackbar(
+                        "Barcode not detected in the uploaded image."
+                      );
+                    }
                   }
-                } else {
-                  showSnackbar('Barcode not detected in the uploaded image.');
-                }
-              });
-            };
-            reader.readAsDataURL(file);
-          }
-        });
+                );
+              };
+              reader.readAsDataURL(file);
+            }
+          });
 
-        document.getElementById('recordBtn').addEventListener('click', function () {
-          recordEntry();
-        });
+        document
+          .getElementById("recordBtn")
+          .addEventListener("click", function () {
+            recordEntry();
+          });
       };
     </script>
   </body>
