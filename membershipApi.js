@@ -174,7 +174,8 @@ exports.handler = async (event, context) => {
           };
         } else {
           const startTimestamp = new Date(startDay).getTime();
-          const endTimestamp = new Date(endDay).getTime();
+          // Update endTimestamp to include the entire day
+          const endTimestamp = new Date(new Date(endDay).setHours(23,59,59,999)).getTime();
           const recordsResult = await docClient.send(
             new QueryCommand({
               TableName: process.env.RECORDS_TABLE,
