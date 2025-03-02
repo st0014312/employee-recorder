@@ -6,7 +6,6 @@ provider:
   runtime: nodejs20.x
   region: us-east-1
   stage: dev
-  profile: linkupadmin
   httpApi:
     cors: true
   environment:
