@@ -46,7 +46,7 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 200,
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': 'https://employee-card-management-web.s3.us-east-1.amazonaws.com',
           'Access-Control-Allow-Headers': 'Content-Type,Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token',
           'Access-Control-Allow-Methods': 'OPTIONS,GET,POST'
         },
