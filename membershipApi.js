@@ -220,7 +220,7 @@ exports.handler = async (event, context) => {
     ...response,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": "https://employee-card-management-web.s3.us-east-1.amazonaws.com",
     },
   };
 };
