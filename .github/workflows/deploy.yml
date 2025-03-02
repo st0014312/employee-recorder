@@ -86,11 +86,11 @@ jobs:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: GitHubActionsSession
-          output-credentials: true
+          # output-credentials: true
 
       - name: Deploy Backend using Serverless
         run: serverless deploy --stage dev --verbose
         env:
           SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ steps.creds.outputs.aws-access-key-id }}
-          AWS_SECRET_ACCESS_KEY: ${{ steps.creds.outputs.aws-secret-access-key }}
+          # AWS_ACCESS_KEY_ID: ${{ steps.creds.outputs.aws-access-key-id }}
+          # AWS_SECRET_ACCESS_KEY: ${{ steps.creds.outputs.aws-secret-access-key }}
